@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weather Brief</title>
+    <meta
+      name="description"
+      content="A morning text that tells you how to dress and whether to bring an umbrella. No app, no account, no API key."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌂</text></svg>"
+    />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1f2937;
+        --muted: #6b7280;
+        --card: #f3f4f6;
+        --line: #e5e7eb;
+        --accent: #2563eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --fg: #e5e7eb;
+          --muted: #9ca3af;
+          --card: #1a1d24;
+          --line: #262b34;
+          --accent: #7aa7ff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        padding: 1rem;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+          sans-serif;
+        line-height: 1.55;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 36rem;
+        padding-bottom: 3rem;
+      }
+      header {
+        padding: 1.5rem 0 0.5rem;
+      }
+      h1 {
+        font-size: 1.7rem;
+        margin: 0 0 0.35rem;
+      }
+      .tagline {
+        color: var(--muted);
+        margin: 0;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 2.25rem 0 0.6rem;
+      }
+      p {
+        margin: 0 0 0.85rem;
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.87em;
+        background: var(--card);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+
+      /* ---- the phone ---- */
+      .phone {
+        margin: 1.5rem auto 0.5rem;
+        width: 100%;
+        max-width: 21rem;
+        border-radius: 2rem;
+        padding: 2.75rem 0.75rem 1.75rem;
+        background: linear-gradient(165deg, #6b8cce 0%, #8fa9d8 45%, #cbb8c9 100%);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+        position: relative;
+        overflow: hidden;
+      }
+      @media (prefers-color-scheme: dark) {
+        .phone {
+          background: linear-gradient(165deg, #26344f 0%, #3b4a66 45%, #4a3f52 100%);
+        }
+      }
+      .clock {
+        text-align: center;
+        color: #fff;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+        margin-bottom: 1.5rem;
+      }
+      .clock .time {
+        font-size: 2.9rem;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+      .clock .date {
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+      .notif {
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 1.1rem;
+        padding: 0.7rem 0.85rem;
+        color: #111;
+        text-align: left;
+        cursor: pointer;
+        transition: opacity 0.28s ease, transform 0.28s ease;
+      }
+      .notif.fade {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      .notif-app {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #666;
+        margin-bottom: 0.25rem;
+      }
+      .notif-app .dot {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.28rem;
+        background: #4aa564;
+        display: inline-grid;
+        place-items: center;
+        font-size: 0.62rem;
+      }
+      .notif-app .when {
+        margin-left: auto;
+        text-transform: none;
+      }
+      .notif-title {
+        font-weight: 600;
+        font-size: 0.97rem;
+        margin-bottom: 0.1rem;
+      }
+      .notif-body {
+        font-size: 0.87rem;
+        color: #333;
+        white-space: pre-line;
+      }
+      .tap {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin: 0.6rem 0 0;
+      }
+
+      /* ---- content bits ---- */
+      .cards {
+        display: grid;
+        gap: 0.6rem;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 30rem) {
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+      }
+      .card strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .card span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .scale {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .scale li {
+        display: grid;
+        grid-template-columns: 5.5rem 1fr;
+        gap: 0.75rem;
+        align-items: baseline;
+        padding: 0.35rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .scale li:last-child {
+        border-bottom: 0;
+      }
+      .scale .icons {
+        font-size: 1.15rem;
+        letter-spacing: 0.05em;
+      }
+      .scale .temp {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      pre {
+        background: var(--card);
+        border-radius: 8px;
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin: 0 0 0.85rem;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: 1em;
+      }
+      .cmt {
+        color: var(--muted);
+      }
+      footer {
+        margin-top: 2.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🌂 Weather Brief</h1>
+      <p class="tagline">
+        One text at 7am. How to dress, and whether to bring an umbrella. That is
+        the whole app.
+      </p>
+    </header>
+
+    <div class="phone">
+      <div class="clock">
+        <div class="time">7:00</div>
+        <div class="date" id="date">Monday, July 27</div>
+      </div>
+      <div class="notif" id="notif" title="Tap for another day">
+        <div class="notif-app">
+          <span class="dot">🔔</span><span>ntfy</span
+          ><span class="when">now</span>
+        </div>
+        <div class="notif-title" id="nt"></div>
+        <div class="notif-body" id="nb"></div>
+      </div>
+    </div>
+    <p class="tap">Tap the notification for another day →</p>
+
+    <h2>Why it exists</h2>
+    <p>
+      The weather app knows everything and tells you all of it. Before 7am I can
+      hold about two facts, and they are always the same two: is it cold, and am
+      I going to get rained on. So this sends those two and nothing else.
+    </p>
+    <div class="cards">
+      <div class="card">
+        <strong>👕 What to wear</strong>
+        <span
+          >Picked from feels-like, not the raw number, and only for the hours you
+          are actually outside.</span
+        >
+      </div>
+      <div class="card">
+        <strong>🌂 Umbrella or not</strong>
+        <span
+          >Silent unless the rain is worth carrying something for. Light drizzle
+          is fine. Walk through it.</span
+        >
+      </div>
+    </div>
+
+    <h2>How it decides</h2>
+    <p>
+      Wardrobe comes off the day's feels-like high between 7am and 9pm. The 3am
+      low is not what you are dressing for.
+    </p>
+    <ul class="scale">
+      <li><span class="icons">🩳👕</span><span>Hot <span class="temp">26° and up</span></span></li>
+      <li><span class="icons">👕</span><span>Warm <span class="temp">18°</span></span></li>
+      <li><span class="icons">👕🧥</span><span>Cool <span class="temp">14°</span></span></li>
+      <li><span class="icons">🧥</span><span>Chilly <span class="temp">10°</span></span></li>
+      <li><span class="icons">🧥🧣</span><span>Cold <span class="temp">5°</span></span></li>
+      <li><span class="icons">🧥🧣🧤</span><span>Very cold <span class="temp">0°</span></span></li>
+      <li><span class="icons">🧥🧣🧤🥾</span><span>Freezing <span class="temp">below 0°</span></span></li>
+    </ul>
+    <p style="margin-top: 0.85rem">
+      The umbrella line only appears if <strong>5mm</strong> of rain is still to
+      come, or <strong>1.5mm</strong> lands in a single hour. One catches the day
+      that soaks you slowly, the other the burst that soaks you at once. Rain
+      that already fell overnight does not count, because it is not a reason to
+      carry anything. Wind, UV, dangerous heat and big swings get a line only
+      when they cross a threshold. Most mornings it is two lines.
+    </p>
+
+    <h2>Getting it</h2>
+    <pre><code>git clone https://github.com/kimhjona/weather-brief
+cd weather-brief
+
+python3 weather.py set-location 97205   <span class="cmt"># your postal code</span>
+python3 weather.py                      <span class="cmt"># today, in the terminal</span>
+python3 weather.py set-topic            <span class="cmt"># pick a private ntfy topic</span>
+python3 weather.py send                 <span class="cmt"># and now on your phone</span></code></pre>
+    <p>
+      Subscribe to the topic in the free
+      <a href="https://ntfy.sh">ntfy</a> app and you are done. A GitHub Actions
+      workflow handles 7am, including daylight saving, so nothing depends on your
+      laptop being open.
+    </p>
+
+    <h2>What it does not need</h2>
+    <p>
+      No API key, no account, no dependencies, no build step. One Python file and
+      the standard library. Forecasts come from
+      <a href="https://open-meteo.com">Open-Meteo</a>, which is free and keyless
+      and aggregates national weather models rather than reselling one vendor's
+      feed. Delivery is a single HTTP POST to <a href="https://ntfy.sh">ntfy</a>,
+      so there is no sender reputation, no domain to verify, and no carrier
+      registration to fall out from under it. The whole point was something that
+      still works in a year.
+    </p>
+
+    <footer>
+      <a href="https://github.com/kimhjona/weather-brief">Source on GitHub →</a>
+      <a href="https://jona.kim">jona.kim</a>
+    </footer>
+
+    <script>
+      const days = [
+        {
+          t: "👕 Warm, 16-21°C",
+          b: "Portland 97205 · Mon 27 Jul · overcast · feels 15-23°C",
+        },
+        {
+          t: "👕🧥 Cool, 12-17°C",
+          b: "☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).\nWindy, gusting to 38 km/h. Something windproof.\nPortland 97205 · Tue 28 Jul · rain · feels 8-15°C",
+        },
+        {
+          t: "🩳👕 Hot, 32-40°C",
+          b: "Feels like 45°C. Stay in the shade and drink more than you want to.\nUV index 9. Sunscreen.\nPortland 97205 · Wed 29 Jul · clear · feels 39-45°C",
+        },
+        {
+          t: "🧥🧣🧤 Very cold, 1-4°C",
+          b: "🌨 Snow, 4cm. Boots.\nPortland 97205 · Thu 30 Jul · snow · feels -3 to 0°C",
+        },
+      ];
+
+      const notif = document.getElementById("notif");
+      const nt = document.getElementById("nt");
+      const nb = document.getElementById("nb");
+      let i = 0;
+      let timer;
+
+      function show(n) {
+        notif.classList.add("fade");
+        setTimeout(() => {
+          nt.textContent = days[n].t;
+          nb.textContent = days[n].b;
+          notif.classList.remove("fade");
+        }, 280);
+      }
+
+      function advance() {
+        i = (i + 1) % days.length;
+        show(i);
+      }
+
+      function restart() {
+        clearInterval(timer);
+        timer = setInterval(advance, 4200);
+      }
+
+      nt.textContent = days[0].t;
+      nb.textContent = days[0].b;
+      notif.addEventListener("click", () => {
+        advance();
+        restart();
+      });
+      restart();
+    </script>
+  </body>
+</html>
