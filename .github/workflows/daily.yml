@@ -1,0 +1,29 @@
+name: Morning weather brief
+
+on:
+  schedule:
+    # GitHub cron only speaks UTC, so 7am local drifts with daylight saving.
+    # We fire on every UTC hour that could be 7am somewhere in the US, and the
+    # script exits quietly unless the local hour at your location is actually 7.
+    - cron: "0 11 * * *"
+    - cron: "0 12 * * *"
+    - cron: "0 13 * * *"
+    - cron: "0 14 * * *"
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Send the brief
+        env:
+          WEATHER_LAT: ${{ secrets.WEATHER_LAT }}
+          WEATHER_LON: ${{ secrets.WEATHER_LON }}
+          WEATHER_LABEL: ${{ secrets.WEATHER_LABEL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python weather.py send --at-hour 7
