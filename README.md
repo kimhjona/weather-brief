@@ -1,6 +1,6 @@
 # weather-brief
 
-A morning weather text that answers two questions and stops: what should I wear,
+A morning weather notification that answers two questions and stops: what should I wear,
 and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 
 ```
