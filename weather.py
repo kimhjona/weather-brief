@@ -375,26 +375,30 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     elif feels_min <= -10:
         notes.append(f"Feels like {feels_min:.0f}°C. Cover every bit of skin.")
     if feels_max - feels_min >= 9:
-        notes.append(f"Big swing, {feels_min:.0f}° to {feels_max:.0f}°. Wear layers.")
+        notes.append("Big swing. Wear layers.")
     if wind >= 35:
         notes.append(f"Windy, gusting to {wind:.0f} km/h. Something windproof.")
     if uv >= 7 and prob < 50:
         notes.append(f"UV index {uv:.0f}. Sunscreen.")
 
+    # Conditions, then who and when. Air quality joins the conditions line on an
+    # ordinary day; when it is bad enough to earn its own line above, saying the
+    # number twice would only make the brief longer.
+    sky = WMO.get(code, "mixed")
+    conditions = sky[:1].upper() + sky[1:]
+
     aqi = daytime_aqi(air, today)
-    air_word = ""
     if aqi is not None:
         air_word, advice = air_advice(aqi)
         if advice:
             notes.append(f"😷 AQI {aqi}, {air_word}. {advice}")
+        else:
+            conditions += f" · AQI {aqi} {air_word}"
 
     when_dt = datetime.strptime(today, "%Y-%m-%d")
-    footer = (f"{label} · {when_dt.strftime('%a %-d %b')} · "
-              f"{WMO.get(code, 'mixed')} · feels {fmt_range(feels_min, feels_max)}°C")
-    if aqi is not None:
-        footer += f" · AQI {aqi} {air_word}"
+    footer = f"{label} · {when_dt.strftime('%a %-d %b')}"
 
-    lines = ([rain] if rain else []) + notes + [footer]
+    lines = ([rain] if rain else []) + notes + [conditions, footer]
     return {
         "title": headline,
         "body": "\n".join(lines),

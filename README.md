@@ -7,14 +7,17 @@ and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 👕🧥 Cool, 12-17°C
 ☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).
 Windy, gusting to 38 km/h. Something windproof.
-Portland 97205 · Mon 27 Jul · overcast · feels 8-15°C · AQI 34 good
+Overcast · AQI 34 good
+Portland 97205 · Mon 27 Jul
 ```
 
-Most days it is two lines, because most days there is nothing to warn you about:
+Most days it is three lines, because most days there is nothing to warn you
+about:
 
 ```
 👕 Warm, 16-21°C
-Portland 97205 · Sun 26 Jul · overcast · feels 15-23°C · AQI 41 good
+Overcast · AQI 41 good
+Portland 97205 · Sun 26 Jul
 ```
 
 ## Setup
@@ -82,7 +85,8 @@ Config lives at `~/.config/weather-brief/config.json`.
 
 Everything keys off **apparent** temperature, not the raw number, and only the
 07:00 to 21:00 window, because the 3am low is not what you are dressing for. The
-range shown is real temperature; the wardrobe is picked off feels-like.
+one range shown is real temperature, since that is the number you would quote to
+someone; the wardrobe beside it is picked off feels-like.
 
 | Feels-like high | | |
 | --- | --- | --- |
@@ -117,11 +121,11 @@ Everything else only appears when it crosses a line: wind over 35 km/h, UV index
 7 or higher on a day that is not already wet, feels-like above 38° or below -10°,
 and a daytime swing of 9° or more.
 
-**Air quality** rides along at the end of the footer, as the worst US AQI of the
-07:00 to 21:00 window with the EPA's word for it: `AQI 41 good`. It is the one
+**Air quality** sits on the conditions line, the worst US AQI of the 07:00 to
+21:00 window with the EPA's word for it: `Overcast · AQI 41 good`. It is the one
 number that is always shown rather than shown on threshold, because a number you
-see every morning is a number you can read at a glance. At 101 and above it also
-earns a line of its own, because that is where the advice changes:
+see every morning is a number you can read at a glance. At 101 and above it moves
+up to a line of its own, because that is where the advice changes:
 
 | AQI | |
 | --- | --- |
@@ -133,7 +137,7 @@ earns a line of its own, because that is where the advice changes:
 The scale is US AQI everywhere, including outside the US, on the grounds that one
 familiar scale beats two correct ones. Air quality comes from a different host
 than the forecast, so it fails on its own: if it is down, the AQI simply drops
-off the footer and the rest of the brief arrives as usual.
+off the conditions line and the rest of the brief arrives as usual.
 
 ## Why these services
 
