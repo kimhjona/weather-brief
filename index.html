@@ -6,7 +6,7 @@
     <title>Weather Brief</title>
     <meta
       name="description"
-      content="A morning text that tells you how to dress and whether to bring an umbrella. No app, no account, no API key."
+      content="A text at 7am. What to wear, and whether to bring an umbrella. No app, no account, no API key."
     />
     <link
       rel="icon"
@@ -166,29 +166,6 @@
       }
 
       /* ---- content bits ---- */
-      .cards {
-        display: grid;
-        gap: 0.6rem;
-        grid-template-columns: 1fr 1fr;
-      }
-      @media (max-width: 30rem) {
-        .cards {
-          grid-template-columns: 1fr;
-        }
-      }
-      .card {
-        background: var(--card);
-        border-radius: 8px;
-        padding: 0.85rem 1rem;
-      }
-      .card strong {
-        display: block;
-        margin-bottom: 0.15rem;
-      }
-      .card span {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
       .scale {
         list-style: none;
         padding: 0;
@@ -245,8 +222,7 @@
     <header>
       <h1>🌂 Weather Brief</h1>
       <p class="tagline">
-        One text at 7am. How to dress, and whether to bring an umbrella. That is
-        the whole app.
+        A text at 7am. What to wear, and whether to bring an umbrella.
       </p>
     </header>
 
@@ -266,33 +242,22 @@
     </div>
     <p class="tap">Tap the notification for another day →</p>
 
-    <h2>Why it exists</h2>
+    <h2>The problem</h2>
     <p>
-      The weather app knows everything and tells you all of it. Before 7am I can
-      hold about two facts, and they are always the same two: is it cold, and am
-      I going to get rained on. So this sends those two and nothing else.
+      I leave my apartment and I'm surprised. It's colder than I thought, or
+      hotter.
     </p>
-    <div class="cards">
-      <div class="card">
-        <strong>👕 What to wear</strong>
-        <span
-          >Picked from feels-like, not the raw number, and only for the hours you
-          are actually outside.</span
-        >
-      </div>
-      <div class="card">
-        <strong>🌂 Umbrella or not</strong>
-        <span
-          >Silent unless the rain is worth carrying something for. Light drizzle
-          is fine. Walk through it.</span
-        >
-      </div>
-    </div>
-
-    <h2>How it decides</h2>
     <p>
-      Wardrobe comes off the day's feels-like high between 7am and 9pm. The 3am
-      low is not what you are dressing for.
+      I could check the weather. It's a few taps. I just don't. I'm from Los
+      Angeles, where nobody checks the weather.
+    </p>
+
+    <h2>The solution</h2>
+    <p>One text at 7am. Two lines. Then I get dressed.</p>
+
+    <h2>How it works</h2>
+    <p>
+      Clothes come off the feels-like high between 7am and 9pm, not the 3am low.
     </p>
     <ul class="scale">
       <li><span class="icons">🩳👕</span><span>Hot <span class="temp">26° and up</span></span></li>
@@ -304,15 +269,17 @@
       <li><span class="icons">🧥🧣🧤🥾</span><span>Freezing <span class="temp">below 0°</span></span></li>
     </ul>
     <p style="margin-top: 0.85rem">
-      The umbrella line only appears if <strong>5mm</strong> of rain is still to
-      come, or <strong>1.5mm</strong> lands in a single hour. One catches the day
-      that soaks you slowly, the other the burst that soaks you at once. Rain
-      that already fell overnight does not count, because it is not a reason to
-      carry anything. Wind, UV, dangerous heat and big swings get a line only
-      when they cross a threshold. Most mornings it is two lines.
+      The umbrella line only shows up if <strong>5mm</strong> of rain is still
+      coming, or <strong>1.5mm</strong> in one hour. Drizzle doesn't count. I'll
+      walk through drizzle.
+    </p>
+    <p>Rain that already fell overnight doesn't count either.</p>
+    <p>
+      Wind, UV, dangerous heat and big temperature swings each get a line when
+      they cross a threshold. Most mornings it's two lines.
     </p>
 
-    <h2>Getting it</h2>
+    <h2>Get it</h2>
     <pre><code>git clone https://github.com/kimhjona/weather-brief
 cd weather-brief
 
@@ -321,23 +288,19 @@ python3 weather.py                      <span class="cmt"># today, in the termin
 python3 weather.py set-topic            <span class="cmt"># pick a private ntfy topic</span>
 python3 weather.py send                 <span class="cmt"># and now on your phone</span></code></pre>
     <p>
-      Subscribe to the topic in the free
-      <a href="https://ntfy.sh">ntfy</a> app and you are done. A GitHub Actions
-      workflow handles 7am, including daylight saving, so nothing depends on your
-      laptop being open.
+      Subscribe to the topic in the <a href="https://ntfy.sh">ntfy</a> app. A
+      GitHub Actions workflow handles 7am and daylight saving, so it doesn't need
+      your laptop open.
     </p>
 
-    <h2>What it does not need</h2>
+    <h2>What it needs</h2>
     <p>
-      No API key, no account, no dependencies, no build step. One Python file and
-      the standard library. Forecasts come from
-      <a href="https://open-meteo.com">Open-Meteo</a>, which is free and keyless
-      and aggregates national weather models rather than reselling one vendor's
-      feed. Delivery is a single HTTP POST to <a href="https://ntfy.sh">ntfy</a>,
-      so there is no sender reputation, no domain to verify, and no carrier
-      registration to fall out from under it. The whole point was something that
-      still works in a year.
+      No API key, no account, no dependencies. One Python file.
+      <a href="https://open-meteo.com">Open-Meteo</a> for forecasts,
+      <a href="https://ntfy.sh">ntfy</a> for delivery. Both are free and neither
+      wants a key.
     </p>
+    <p>I wanted something that still works in a year.</p>
 
     <footer>
       <a href="https://github.com/kimhjona/weather-brief">Source on GitHub →</a>
