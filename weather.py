@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+AIR_QUALITY_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 GEOCODE_URL = "https://api.zippopotam.us"
 NTFY_URL = "https://ntfy.sh"
 
@@ -51,6 +52,18 @@ WARDROBE = (
     (0, "Very cold", "🧥🧣🧤"),
 )
 FREEZING = ("Freezing", "🧥🧣🧤🥾")
+
+# US EPA air quality bands: floor, the word for it, and what to do about it.
+# Ordered high to low. Nothing to do below 101, so the footer number is the
+# whole story on an ordinary day.
+AIR_QUALITY = (
+    (301, "hazardous", "Stay inside."),
+    (201, "very unhealthy", "Stay inside, windows shut."),
+    (151, "unhealthy", "Skip the outdoor workout."),
+    (101, "unhealthy for sensitive groups", "Go easy outside if your lungs are touchy."),
+    (51, "moderate", None),
+    (0, "good", None),
+)
 
 WMO = {
     0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast",
@@ -181,6 +194,48 @@ def get_forecast(lat: float, lon: float) -> dict:
     return fetch_json(f"{FORECAST_URL}?{query}")
 
 
+def get_air_quality(lat: float, lon: float) -> dict | None:
+    """Today's hourly US AQI, or None if the air quality service is unhappy.
+
+    A separate host from the forecast, so it fails separately. Air quality is
+    the least important line in the brief and never worth losing the rest over.
+    """
+    params = {
+        "latitude": f"{lat:.4f}",
+        "longitude": f"{lon:.4f}",
+        "timezone": "auto",
+        "forecast_days": "1",
+        "hourly": "us_aqi",
+    }
+    query = "&".join(f"{k}={v}" for k, v in params.items())
+    try:
+        return fetch_json(f"{AIR_QUALITY_URL}?{query}", timeout=10)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError):
+        return None
+
+
+def daytime_aqi(air: dict | None, today: str) -> int | None:
+    """The worst AQI of the daytime hours, which is what you plan around."""
+    if not air:
+        return None
+    hourly = air.get("hourly") or {}
+    stamps, values = hourly.get("time") or [], hourly.get("us_aqi") or []
+    readings = [
+        v for stamp, v in zip(stamps, values)
+        if v is not None and stamp.startswith(today)
+        and DAY_START <= int(stamp[11:13]) <= DAY_END
+    ]
+    return round(max(readings)) if readings else None
+
+
+def air_advice(aqi: int) -> tuple[str, str | None]:
+    """Returns (word, what to do) for an AQI number."""
+    for floor, word, advice in AIR_QUALITY:
+        if aqi >= floor:
+            return word, advice
+    return "good", None
+
+
 def local_now(forecast: dict) -> datetime:
     """Wall-clock time at the forecast location, without needing tzdata."""
     offset = timedelta(seconds=forecast.get("utc_offset_seconds", 0))
@@ -262,7 +317,8 @@ def rain_report(hours: list[dict], from_hour: int, threshold_mm: float,
 
 def build_brief(forecast: dict, label: str, from_hour: int = 0,
                 threshold_mm: float = DEFAULT_UMBRELLA_MM,
-                peak_mm: float = DEFAULT_UMBRELLA_PEAK_MM) -> dict:
+                peak_mm: float = DEFAULT_UMBRELLA_PEAK_MM,
+                air: dict | None = None) -> dict:
     daily = forecast["daily"]
     hourly = forecast["hourly"]
     today = daily["time"][0]
@@ -325,9 +381,18 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     if uv >= 7 and prob < 50:
         notes.append(f"UV index {uv:.0f}. Sunscreen.")
 
+    aqi = daytime_aqi(air, today)
+    air_word = ""
+    if aqi is not None:
+        air_word, advice = air_advice(aqi)
+        if advice:
+            notes.append(f"😷 AQI {aqi}, {air_word}. {advice}")
+
     when_dt = datetime.strptime(today, "%Y-%m-%d")
     footer = (f"{label} · {when_dt.strftime('%a %-d %b')} · "
               f"{WMO.get(code, 'mixed')} · feels {fmt_range(feels_min, feels_max)}°C")
+    if aqi is not None:
+        footer += f" · AQI {aqi} {air_word}"
 
     lines = ([rain] if rain else []) + notes + [footer]
     return {
@@ -425,7 +490,8 @@ def cmd_today(args) -> int:
 
     brief = build_brief(forecast, label, from_hour=0 if args.full_day else now.hour,
                         threshold_mm=cfg.get("umbrella_mm", DEFAULT_UMBRELLA_MM),
-                        peak_mm=cfg.get("umbrella_peak_mm", DEFAULT_UMBRELLA_PEAK_MM))
+                        peak_mm=cfg.get("umbrella_peak_mm", DEFAULT_UMBRELLA_PEAK_MM),
+                        air=get_air_quality(lat, lon))
 
     print(brief["title"])
     print(brief["body"])

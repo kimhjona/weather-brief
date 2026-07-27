@@ -278,6 +278,11 @@
       Wind, UV, dangerous heat and big temperature swings each get a line when
       they cross a threshold. Most mornings it's two lines.
     </p>
+    <p>
+      Air quality sits at the end of the footer every day, worst AQI of the
+      daylight hours. Above 100 it gets its own line, because that's where it
+      changes what you'd do.
+    </p>
 
     <h2>Get it</h2>
     <pre><code>git clone https://github.com/kimhjona/weather-brief
@@ -311,19 +316,19 @@ python3 weather.py send                 <span class="cmt"># and now on your phon
       const days = [
         {
           t: "👕 Warm, 16-21°C",
-          b: "Portland 97205 · Mon 27 Jul · overcast · feels 15-23°C",
+          b: "Portland 97205 · Mon 27 Jul · overcast · feels 15-23°C · AQI 41 good",
         },
         {
           t: "👕🧥 Cool, 12-17°C",
-          b: "☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).\nWindy, gusting to 38 km/h. Something windproof.\nPortland 97205 · Tue 28 Jul · rain · feels 8-15°C",
+          b: "☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).\nWindy, gusting to 38 km/h. Something windproof.\nPortland 97205 · Tue 28 Jul · rain · feels 8-15°C · AQI 22 good",
         },
         {
           t: "🩳👕 Hot, 32-40°C",
-          b: "Feels like 45°C. Stay in the shade and drink more than you want to.\nUV index 9. Sunscreen.\nPortland 97205 · Wed 29 Jul · clear · feels 39-45°C",
+          b: "Feels like 45°C. Stay in the shade and drink more than you want to.\nUV index 9. Sunscreen.\n😷 AQI 168, unhealthy. Skip the outdoor workout.\nPortland 97205 · Wed 29 Jul · clear · feels 39-45°C · AQI 168 unhealthy",
         },
         {
           t: "🧥🧣🧤 Very cold, 1-4°C",
-          b: "🌨 Snow, 4cm. Boots.\nPortland 97205 · Thu 30 Jul · snow · feels -3 to 0°C",
+          b: "🌨 Snow, 4cm. Boots.\nPortland 97205 · Thu 30 Jul · snow · feels -3 to 0°C · AQI 55 moderate",
         },
       ];
 

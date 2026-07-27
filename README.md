@@ -7,14 +7,14 @@ and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 👕🧥 Cool, 12-17°C
 ☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).
 Windy, gusting to 38 km/h. Something windproof.
-Portland 97205 · Mon 27 Jul · overcast · feels 8-15°C
+Portland 97205 · Mon 27 Jul · overcast · feels 8-15°C · AQI 34 good
 ```
 
 Most days it is two lines, because most days there is nothing to warn you about:
 
 ```
 👕 Warm, 16-21°C
-Portland 97205 · Sun 26 Jul · overcast · feels 15-23°C
+Portland 97205 · Sun 26 Jul · overcast · feels 15-23°C · AQI 41 good
 ```
 
 ## Setup
@@ -117,11 +117,30 @@ Everything else only appears when it crosses a line: wind over 35 km/h, UV index
 7 or higher on a day that is not already wet, feels-like above 38° or below -10°,
 and a daytime swing of 9° or more.
 
+**Air quality** rides along at the end of the footer, as the worst US AQI of the
+07:00 to 21:00 window with the EPA's word for it: `AQI 41 good`. It is the one
+number that is always shown rather than shown on threshold, because a number you
+see every morning is a number you can read at a glance. At 101 and above it also
+earns a line of its own, because that is where the advice changes:
+
+| AQI | |
+| --- | --- |
+| 101+ | unhealthy for sensitive groups, go easy outside if your lungs are touchy |
+| 151+ | unhealthy, skip the outdoor workout |
+| 201+ | very unhealthy, stay inside, windows shut |
+| 301+ | hazardous, stay inside |
+
+The scale is US AQI everywhere, including outside the US, on the grounds that one
+familiar scale beats two correct ones. Air quality comes from a different host
+than the forecast, so it fails on its own: if it is down, the AQI simply drops
+off the footer and the rest of the brief arrives as usual.
+
 ## Why these services
 
-**[Open-Meteo](https://open-meteo.com)** for the forecast. Free for
-non-commercial use, no key to lose, no account to expire, and it aggregates
-national weather-service models rather than reselling one vendor's feed.
+**[Open-Meteo](https://open-meteo.com)** for the forecast, and its air quality
+endpoint for the AQI. Free for non-commercial use, no key to lose, no account to
+expire, and it aggregates national weather-service models rather than reselling
+one vendor's feed.
 
 **[Zippopotam](https://zippopotam.us)** for postal codes, hit exactly once per
 `set-location` and then cached. If it ever disappears, `--coords` is the escape
