@@ -6,7 +6,7 @@
     <title>Weather Brief</title>
     <meta
       name="description"
-      content="A notification at 7am. What to wear, and whether to bring an umbrella. No account, no API key."
+      content="A notification before 7am. What to wear, and whether to bring an umbrella. No account, no API key."
     />
     <link
       rel="icon"
@@ -222,13 +222,13 @@
     <header>
       <h1>🌂 Weather Brief</h1>
       <p class="tagline">
-        A notification at 7am. What to wear, and whether to bring an umbrella.
+        A notification before 7am. What to wear, and whether to bring an umbrella.
       </p>
     </header>
 
     <div class="phone">
       <div class="clock">
-        <div class="time">7:00</div>
+        <div class="time">6:45</div>
         <div class="date" id="date">Monday, July 27</div>
       </div>
       <div class="notif" id="notif" title="Tap for another day">
@@ -255,7 +255,7 @@
     </p>
 
     <h2>The solution</h2>
-    <p>One notification at 7am. The call is already made. Then I get dressed.</p>
+    <p>One notification before 7am. The call is already made. Then I get dressed.</p>
 
     <h2>How it works</h2>
     <p>
@@ -296,8 +296,8 @@ python3 weather.py set-topic            <span class="cmt"># pick a private ntfy 
 python3 weather.py send                 <span class="cmt"># and now on your phone</span></code></pre>
     <p>
       Subscribe to the topic in the <a href="https://ntfy.sh">ntfy</a> app. A
-      GitHub Actions workflow handles 7am and daylight saving, so it doesn't need
-      your laptop open.
+      GitHub Actions workflow handles the timing and daylight saving, so it
+      doesn't need your laptop open.
     </p>
 
     <h2>What it needs</h2>

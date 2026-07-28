@@ -31,6 +31,10 @@ NTFY_URL = "https://ntfy.sh"
 # The hours we actually care about dressing for.
 DAY_START, DAY_END = 7, 21
 
+# ntfy wants a little lead time before it will hold a message rather than send
+# it straight through. Below this, asking for a delay is pointless.
+NTFY_MIN_DELAY = 10
+
 # Two ways a day earns an umbrella: enough rain in total to soak you eventually,
 # or one hour heavy enough to soak you at once. Below both, the brief stays quiet.
 # 5mm is about 0.2 inches. 1.5mm in an hour is the top of "light rain" and well
@@ -242,6 +246,19 @@ def local_now(forecast: dict) -> datetime:
     return datetime.now(timezone.utc).astimezone(timezone(offset))
 
 
+def local_today_at(now: datetime, hhmm: str) -> datetime:
+    """HH:MM today, in the forecast location's own timezone.
+
+    Reading the offset off the forecast means daylight saving is someone else's
+    problem: 6:45 is 6:45 in June and in December.
+    """
+    try:
+        hour, minute = (int(part) for part in hhmm.split(":"))
+        return now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    except ValueError:
+        die(f"--deliver-at wants HH:MM, like 06:45 (got {hhmm!r})")
+
+
 # ---------------------------------------------------------------- advice
 
 def dress_advice(feels_max: float) -> tuple[str, str]:
@@ -420,14 +437,24 @@ def render_detail(hours: list[dict]) -> str:
 
 # ------------------------------------------------------------------ ntfy
 
-def push(topic: str, brief: dict) -> None:
-    fetch_json(NTFY_URL, payload={
+def push(topic: str, brief: dict, deliver_at: int | None = None) -> None:
+    """Publish now, or hand ntfy a release time and let it hold the message.
+
+    Holding is what makes a single daily cron workable. GitHub dispatches
+    scheduled jobs late by anywhere from twenty minutes to two hours, so the job
+    only has to run *sometime* before the delivery time, and the brief still
+    arrives on the same minute every morning.
+    """
+    payload = {
         "topic": topic,
         "title": brief["title"],
         "message": brief["body"],
         "tags": [brief["tag"]],
         "priority": 3,
-    })
+    }
+    if deliver_at is not None:
+        payload["delay"] = str(deliver_at)
+    fetch_json(NTFY_URL, payload=payload)
 
 
 # ------------------------------------------------------------------- cli
@@ -492,7 +519,18 @@ def cmd_today(args) -> int:
         print(f"local time is {now:%H:%M}, not {args.at_hour:02d}:00. Nothing sent.")
         return 0
 
-    brief = build_brief(forecast, label, from_hour=0 if args.full_day else now.hour,
+    # Write the brief for the hour it will be read, not the hour the job happens
+    # to run. A 3am run should still count rain from breakfast onward.
+    read_hour, deliver_at = now.hour, None
+    if args.deliver_at:
+        target = local_today_at(now, args.deliver_at)
+        read_hour = target.hour
+        if target > now + timedelta(seconds=NTFY_MIN_DELAY):
+            deliver_at = int(target.timestamp())
+        else:
+            print(f"{args.deliver_at} local already went by at {now:%H:%M}. Sending now.")
+
+    brief = build_brief(forecast, label, from_hour=0 if args.full_day else read_hour,
                         threshold_mm=cfg.get("umbrella_mm", DEFAULT_UMBRELLA_MM),
                         peak_mm=cfg.get("umbrella_peak_mm", DEFAULT_UMBRELLA_PEAK_MM),
                         air=get_air_quality(lat, lon))
@@ -507,11 +545,14 @@ def cmd_today(args) -> int:
         topic = cfg.get("ntfy_topic")
         if not topic:
             die("no ntfy topic saved. Run: weather.py set-topic")
+        where = f"{NTFY_URL}/{topic}"
+        when = f" for {args.deliver_at} local" if deliver_at else ""
         if args.dry_run:
-            print(f"\n[dry run] would push to {NTFY_URL}/{topic}")
+            print(f"\n[dry run] would queue{when} at {where}" if deliver_at
+                  else f"\n[dry run] would push to {where}")
         else:
-            push(topic, brief)
-            print(f"\nPushed to {NTFY_URL}/{topic}")
+            push(topic, brief, deliver_at)
+            print(f"\nQueued{when} at {where}" if deliver_at else f"\nPushed to {where}")
     return 0
 
 
@@ -541,6 +582,8 @@ def main(argv=None) -> int:
         p.add_argument("--detail", action="store_true", help="also show an hourly table")
         p.add_argument("--at-hour", type=int, metavar="H",
                        help="do nothing unless the local hour is H (for UTC cron)")
+        p.add_argument("--deliver-at", metavar="HH:MM",
+                       help="have ntfy hold the brief until HH:MM local today")
         p.add_argument("--dry-run", action="store_true", help="do not actually push")
         p.add_argument("--full-day", action="store_true",
                        help="count rain from midnight, not from now")

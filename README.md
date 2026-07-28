@@ -39,7 +39,7 @@ Subscribe to the topic it prints, then `python3 weather.py send` to test.
 Anyone who knows a topic name can read it, which is why the generated one is
 random. It is not a secret worth protecting, but do not rename it to `weather`.
 
-## Daily at 7am
+## Daily at 6:45am
 
 The included GitHub Actions workflow runs it for you, whether or not your laptop
 is open. Push this repo to GitHub, then add four repository secrets under
@@ -55,15 +55,27 @@ is open. Push this repo to GitHub, then add four repository secrets under
 Environment variables override the config file, so the workflow needs nothing
 checked in. Trigger it by hand once from the Actions tab to confirm it works.
 
-Two things to know about GitHub's scheduler: it runs in UTC, and it can fire ten
-or twenty minutes late when the platform is busy. The workflow handles the first
-by waking on five different UTC hours and passing `--at-hour 7`, which makes the
-script exit without sending unless the local hour at your coordinates really is
-7. Daylight saving takes care of itself. The lateness you cannot fix; expect the
-message somewhere in the 7am hour rather than at 7:00 sharp.
+GitHub's scheduler runs in UTC and dispatches late, sometimes by two hours. So
+the workflow does not try to run at 6:45. It runs once in the small hours and
+passes `--deliver-at 06:45`, which publishes the brief immediately with a release
+time attached; ntfy holds the message and hands it to your phone at 6:45 local.
+The cron owes us one run at some point in the several hours beforehand, and
+nothing worse than a late dispatch can happen. Daylight saving takes care of
+itself, because the script reads the UTC offset off the forecast rather than
+trusting the cron.
 
-If you would rather have it exact and do not mind that it only fires when the Mac
-is awake, use launchd instead and drop the `--at-hour` flag.
+The brief is written for 6:45 regardless of when the job ran, so a 3am run still
+counts rain from breakfast onward and not from overnight.
+
+One cron is one point of failure: if GitHub drops that dispatch entirely, you get
+nothing that morning. Scheduling on an odd minute rather than the top of the hour
+makes that much less likely. A second cron would not help, because ntfy does not
+let an anonymous topic see its own queued-but-undelivered messages, so the
+backup run cannot tell the brief is already waiting and would just send a second
+one.
+
+If a delivery time already went by when the job runs, the brief goes out
+immediately instead. That is what a manual run from the Actions tab does at noon.
 
 ## Commands
 
@@ -74,6 +86,7 @@ is awake, use launchd instead and drop the `--at-hour` flag.
 | `weather.py today --full-day` | count rain from midnight rather than from now |
 | `weather.py send` | brief, and push it to your phone |
 | `weather.py send --dry-run` | everything except the push |
+| `weather.py send --deliver-at 06:45` | publish now, ntfy delivers at 6:45 local |
 | `weather.py set-location 97205` | US postal code |
 | `weather.py set-location SW1A --country gb` | elsewhere |
 | `weather.py set-location --coords=51.5,-0.13` | skip geocoding |

@@ -2,14 +2,13 @@ name: Morning weather brief
 
 on:
   schedule:
-    # GitHub cron only speaks UTC, so 7am local drifts with daylight saving.
-    # We fire on every UTC hour that could be 7am somewhere in the US, and the
-    # script exits quietly unless the local hour at your location is actually 7.
-    - cron: "0 11 * * *"
-    - cron: "0 12 * * *"
-    - cron: "0 13 * * *"
-    - cron: "0 14 * * *"
-    - cron: "0 15 * * *"
+    # This does not have to be 6:45 anywhere. The job hands ntfy a release time
+    # and ntfy holds the message, so all this cron owes us is one run at some
+    # point in the several hours beforehand. GitHub dispatches late by twenty
+    # minutes to two hours and that no longer costs us the brief.
+    # An odd minute, because GitHub is likeliest to drop a run scheduled on the
+    # hour, when everyone else's crons fire too.
+    - cron: "17 10 * * *"
   workflow_dispatch:
 
 jobs:
@@ -26,4 +25,4 @@ jobs:
           WEATHER_LON: ${{ secrets.WEATHER_LON }}
           WEATHER_LABEL: ${{ secrets.WEATHER_LABEL }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python weather.py send --at-hour 7
+        run: python weather.py send --deliver-at 06:45
