@@ -277,13 +277,18 @@
     </p>
     <p>Rain that already fell overnight doesn't count either.</p>
     <p>
-      Wind, UV, dangerous heat and big temperature swings each get a line when
-      they cross a threshold. Most mornings none of them do.
+      Wind and UV join the second line when they cross a threshold. Most
+      mornings neither does.
     </p>
     <p>
-      Air quality sits on the conditions line every day, worst AQI of the
-      daylight hours. Above 100 it moves up to its own line, because that's
-      where it changes what you'd do.
+      Air quality rides in the title every day, worst AQI of the daylight
+      hours. Above 100 it picks up a 😷, because that's where it changes what
+      you'd do.
+    </p>
+    <p>
+      Nothing gets a sentence. A phone cuts the title around twenty characters,
+      so the numbers go first and the advice goes away: 12-24° already tells you
+      to wear layers.
     </p>
 
     <h2>Get it</h2>
@@ -317,20 +322,20 @@ python3 weather.py send                 <span class="cmt"># and now on your phon
     <script>
       const days = [
         {
-          t: "👕 Warm, 16-21°C",
-          b: "Overcast · AQI 41 good\nPortland 97205 · Mon 27 Jul",
+          t: "16-21° · AQI 41",
+          b: "👕 · no rain\nOvercast · Portland 97205 · Mon 27 Jul",
         },
         {
-          t: "👕🧥 Cool, 12-17°C",
-          b: "☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).\nWindy, gusting to 38 km/h. Something windproof.\nRain · AQI 22 good\nPortland 97205 · Tue 28 Jul",
+          t: "12-17° · AQI 22",
+          b: "👕🧥 · ☂️ 8-10am, 5-7pm, 8mm · 💨 38km/h\nRain · Portland 97205 · Tue 28 Jul",
         },
         {
-          t: "🩳👕 Hot, 32-40°C",
-          b: "Feels like 45°C. Stay in the shade and drink more than you want to.\nUV index 9. Sunscreen.\n😷 AQI 168, unhealthy. Skip the outdoor workout.\nClear\nPortland 97205 · Wed 29 Jul",
+          t: "32-40° · AQI 168😷",
+          b: "🩳👕 · no rain · UV 9\nClear · Portland 97205 · Wed 29 Jul",
         },
         {
-          t: "🧥🧣🧤 Very cold, 1-4°C",
-          b: "🌨 Snow, 4cm. Boots.\nSnow · AQI 55 moderate\nPortland 97205 · Thu 30 Jul",
+          t: "1-4° · AQI 55",
+          b: "🧥🧣🧤 · 🌨 4cm\nSnow · Portland 97205 · Thu 30 Jul",
         },
       ];
 

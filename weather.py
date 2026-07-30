@@ -232,12 +232,9 @@ def daytime_aqi(air: dict | None, today: str) -> int | None:
     return round(max(readings)) if readings else None
 
 
-def air_advice(aqi: int) -> tuple[str, str | None]:
-    """Returns (word, what to do) for an AQI number."""
-    for floor, word, advice in AIR_QUALITY:
-        if aqi >= floor:
-            return word, advice
-    return "good", None
+def air_is_bad(aqi: int) -> bool:
+    """True once the EPA bands start asking you to change your plans."""
+    return any(aqi >= floor and advice for floor, _word, advice in AIR_QUALITY)
 
 
 def local_now(forecast: dict) -> datetime:
@@ -282,19 +279,27 @@ def fmt_hour(hour: int) -> str:
     return f"{display}{suffix}"
 
 
-def fmt_run(run: list[dict]) -> str:
-    start, end = run[0]["hour"], run[-1]["hour"] + 1
+def fmt_span(start: int, end: int) -> str:
+    """8-11am, or 11am-2pm when the two ends disagree about am and pm."""
     if end - start <= 1:
-        return f"around {fmt_hour(start)}"
-    return f"{fmt_hour(start)} to {fmt_hour(end)}"
+        return fmt_hour(start)
+    first, last = fmt_hour(start), fmt_hour(end)
+    if first[-2:] == last[-2:]:
+        first = first[:-2]
+    return f"{first}-{last}"
+
+
+def fmt_run(run: list[dict]) -> str:
+    return fmt_span(run[0]["hour"], run[-1]["hour"] + 1)
 
 
 def rain_report(hours: list[dict], from_hour: int, threshold_mm: float,
                 peak_mm: float = DEFAULT_UMBRELLA_PEAK_MM) -> str | None:
-    """The umbrella line, or None when there is not enough rain to mention.
+    """The umbrella cell, or None when there is not enough rain to mention.
 
-    Only counts rain still to come. Rain that already fell overnight should not
-    talk you into carrying an umbrella.
+    Short enough to sit beside the other numbers: `☂️ 8-11am, 3mm`. Only counts
+    rain still to come. Rain that already fell overnight should not talk you
+    into carrying an umbrella.
     """
     upcoming = [h for h in hours if h["hour"] >= from_hour]
     total = sum(h["mm"] for h in upcoming)
@@ -317,17 +322,18 @@ def rain_report(hours: list[dict], from_hour: int, threshold_mm: float,
 
     amount = f"{total:.0f}mm" if total >= 1 else f"{total:.1f}mm"
     if not runs:
-        return f"☂️ Umbrella. {amount} of rain today."
+        return f"☂️ {amount}"
     # Rank by how much rain each stretch actually delivers, not how long it is.
     runs.sort(key=lambda r: sum(h["mm"] for h in r), reverse=True)
     if len(runs) > 2:
+        # Too scattered to name. One span from the first drop to the last is
+        # wrong in the middle but right about when to carry the umbrella.
         spread = sorted(runs, key=lambda r: r[0]["hour"])
-        window = (f"on and off from {fmt_hour(spread[0][0]['hour'])} "
-                  f"to {fmt_hour(spread[-1][-1]['hour'] + 1)}")
+        window = fmt_span(spread[0][0]["hour"], spread[-1][-1]["hour"] + 1)
     else:
-        window = " and ".join(fmt_run(r) for r in
-                              sorted(runs[:2], key=lambda r: r[0]["hour"]))
-    return f"☂️ Umbrella. Rain {window} ({amount})."
+        window = ", ".join(fmt_run(r) for r in
+                           sorted(runs[:2], key=lambda r: r[0]["hour"]))
+    return f"☂️ {window}, {amount}"
 
 
 # ----------------------------------------------------------------- brief
@@ -376,50 +382,40 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     uv = d("uv_index_max")
     code = int(d("weather_code"))
 
-    word, icons = dress_advice(feels_max)
-    headline = f"{icons} {word}, {fmt_range(temp_min, temp_max)}°C"
-
-    # Silence is the answer for a dry day. Only speak up when it matters.
-    if snow >= 0.5:
-        rain, tag = f"🌨 Snow, {snow:.0f}cm. Boots.", "snowflake"
-    else:
-        rain = rain_report(hours, from_hour, threshold_mm, peak_mm)
-        tag = "umbrella" if rain else ("sunny" if code in (0, 1) else "cloud")
-
-    notes = []
-    if feels_max >= 38:
-        notes.append(f"Feels like {feels_max:.0f}°C. Stay in the shade and drink more than you want to.")
-    elif feels_min <= -10:
-        notes.append(f"Feels like {feels_min:.0f}°C. Cover every bit of skin.")
-    if feels_max - feels_min >= 9:
-        notes.append("Big swing. Wear layers.")
-    if wind >= 35:
-        notes.append(f"Windy, gusting to {wind:.0f} km/h. Something windproof.")
-    if uv >= 7 and prob < 50:
-        notes.append(f"UV index {uv:.0f}. Sunscreen.")
-
-    # Conditions, then who and when. Air quality joins the conditions line on an
-    # ordinary day; when it is bad enough to earn its own line above, saying the
-    # number twice would only make the brief longer.
-    sky = WMO.get(code, "mixed")
-    conditions = sky[:1].upper() + sky[1:]
-
+    # A phone notification gives you one big line and cuts it off around twenty
+    # characters, so the title is numbers only: the range you dress for and the
+    # air you breathe. No leading emoji, no adjective. Both of those used to push
+    # the temperature past the fold on a small screen.
     aqi = daytime_aqi(air, today)
-    if aqi is not None:
-        air_word, advice = air_advice(aqi)
-        if advice:
-            notes.append(f"😷 AQI {aqi}, {air_word}. {advice}")
-        else:
-            conditions += f" · AQI {aqi} {air_word}"
+    if aqi is None:
+        # Nothing follows to give the number context, so name the unit.
+        title = f"{fmt_range(temp_min, temp_max)}°C"
+    else:
+        title = f"{fmt_range(temp_min, temp_max)}° · AQI {aqi}"
+        if air_is_bad(aqi):
+            title += "😷"
 
+    # Then one line of everything else that is a number, worst first. Each cell
+    # earns its place by crossing a line; a quiet day is just the wardrobe.
+    _, icons = dress_advice(feels_max)
+    stats = [icons]
+    if snow >= 0.5:
+        stats.append(f"🌨 {snow:.0f}cm")
+    else:
+        stats.append(rain_report(hours, from_hour, threshold_mm, peak_mm) or "no rain")
+    if uv >= 6 and prob < 50:
+        stats.append(f"UV {uv:.0f}")
+    if wind >= 35:
+        stats.append(f"💨 {wind:.0f}km/h")
+
+    # Last line is the stuff you read only when something looks off.
+    sky = WMO.get(code, "mixed")
     when_dt = datetime.strptime(today, "%Y-%m-%d")
-    footer = f"{label} · {when_dt.strftime('%a %-d %b')}"
+    footer = f"{sky[:1].upper()}{sky[1:]} · {label} · {when_dt.strftime('%a %-d %b')}"
 
-    lines = ([rain] if rain else []) + notes + [conditions, footer]
     return {
-        "title": headline,
-        "body": "\n".join(lines),
-        "tag": tag,
+        "title": title,
+        "body": " · ".join(stats) + "\n" + footer,
         "hours": hours,
     }
 
@@ -445,11 +441,12 @@ def push(topic: str, brief: dict, deliver_at: int | None = None) -> None:
     only has to run *sometime* before the delivery time, and the brief still
     arrives on the same minute every morning.
     """
+    # No tags. ntfy renders an emoji tag as a prefix to the title, and on a
+    # narrow screen that prefix costs more than the temperature it displaces.
     payload = {
         "topic": topic,
         "title": brief["title"],
         "message": brief["body"],
-        "tags": [brief["tag"]],
         "priority": 3,
     }
     if deliver_at is not None:

@@ -4,21 +4,27 @@ A morning weather notification that answers two questions and stops: what should
 and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 
 ```
-👕🧥 Cool, 12-17°C
-☂️ Umbrella. Rain 8am to 10am and 5pm to 7pm (8mm).
-Windy, gusting to 38 km/h. Something windproof.
-Overcast · AQI 34 good
-Portland 97205 · Mon 27 Jul
+12-17° · AQI 34
+👕🧥 · ☂️ 8-10am, 5-7pm, 8mm · 💨 38km/h
+Overcast · Portland 97205 · Mon 27 Jul
 ```
 
-Most days it is three lines, because most days there is nothing to warn you
-about:
+Three lines, always, in the same order. Most days the middle one is nearly
+empty, because most days there is nothing to warn you about:
 
 ```
-👕 Warm, 16-21°C
-Overcast · AQI 41 good
-Portland 97205 · Sun 26 Jul
+16-21° · AQI 41
+👕 · no rain
+Overcast · Portland 97205 · Sun 26 Jul
 ```
+
+The shape is fixed on purpose. A phone truncates a notification title at
+roughly twenty characters and shows about four lines of body, so the title is
+numbers only: the temperature range you dress for and the air you breathe, left
+to right, nothing in front of them. No emoji tag, no adjective, no unit that a
+number does not need. Line two is every other figure worth having, and only
+when it crosses a threshold. Line three is what you read when something looks
+wrong.
 
 ## Setup
 
@@ -99,7 +105,8 @@ Config lives at `~/.config/weather-brief/config.json`.
 Everything keys off **apparent** temperature, not the raw number, and only the
 07:00 to 21:00 window, because the 3am low is not what you are dressing for. The
 one range shown is real temperature, since that is the number you would quote to
-someone; the wardrobe beside it is picked off feels-like.
+someone; the wardrobe below it is picked off feels-like. Only the icons are
+shown, never the word, which the range already tells you.
 
 | Feels-like high | | |
 | --- | --- | --- |
@@ -119,9 +126,12 @@ burst that soaks you at once. Seattle drizzle at 0.2mm/hr clears neither bar and
 stays silent, which is the point.
 
 Only rain from the current hour onward counts, because a downpour that already
-happened overnight is not a reason to carry anything. When the line does appear it
-names the wet stretches: one or two get spelled out, three or more collapse to "on
-and off from X to Y". Snow is handled separately and always gets mentioned.
+happened overnight is not a reason to carry anything. Below both bars the cell
+reads `no rain`; above them it names the wet stretches and the total, as in
+`☂️ 8-10am, 5-7pm, 8mm`. One or two stretches get spelled out, three or more
+collapse to a single span from the first drop to the last, which is wrong in
+the middle and right about when to carry the umbrella. Snow is handled
+separately and always gets mentioned.
 
 Both numbers are config, not code. Raise them in
 `~/.config/weather-brief/config.json`:
@@ -130,15 +140,19 @@ Both numbers are config, not code. Raise them in
 { "umbrella_mm": 8, "umbrella_peak_mm": 2.5 }
 ```
 
-Everything else only appears when it crosses a line: wind over 35 km/h, UV index
-7 or higher on a day that is not already wet, feels-like above 38° or below -10°,
-and a daytime swing of 9° or more.
+Everything else only appears when it crosses a line: wind over 35 km/h, and UV
+index 6 or higher on a day that is not already wet.
 
-**Air quality** sits on the conditions line, the worst US AQI of the 07:00 to
-21:00 window with the EPA's word for it: `Overcast · AQI 41 good`. It is the one
-number that is always shown rather than shown on threshold, because a number you
-see every morning is a number you can read at a glance. At 101 and above it moves
-up to a line of its own, because that is where the advice changes:
+None of it comes with a sentence attached. The brief used to explain itself
+("Big swing. Wear layers.", "UV index 7. Sunscreen.") and the explanations were
+the first thing a small screen cut, taking the numbers with them. A range of
+12-24° is its own argument for layers.
+
+**Air quality** rides in the title, the worst US AQI of the 07:00 to 21:00
+window. It is the one number that is always shown rather than shown on
+threshold, because a number you see every morning is a number you can read at a
+glance. At 101 and above it picks up a 😷, which is where the EPA's advice
+changes:
 
 | AQI | |
 | --- | --- |
@@ -149,8 +163,8 @@ up to a line of its own, because that is where the advice changes:
 
 The scale is US AQI everywhere, including outside the US, on the grounds that one
 familiar scale beats two correct ones. Air quality comes from a different host
-than the forecast, so it fails on its own: if it is down, the AQI simply drops
-off the conditions line and the rest of the brief arrives as usual.
+than the forecast, so it fails on its own: if it is down, the title falls back to
+`12-17°C` and the rest of the brief arrives as usual.
 
 ## Why these services
 
