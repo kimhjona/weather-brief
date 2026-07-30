@@ -69,20 +69,6 @@ AIR_QUALITY = (
     (0, "good", None),
 )
 
-WMO = {
-    0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast",
-    45: "fog", 48: "freezing fog",
-    51: "light drizzle", 53: "drizzle", 55: "heavy drizzle",
-    56: "freezing drizzle", 57: "freezing drizzle",
-    61: "light rain", 63: "rain", 65: "heavy rain",
-    66: "freezing rain", 67: "freezing rain",
-    71: "light snow", 73: "snow", 75: "heavy snow", 77: "snow grains",
-    80: "rain showers", 81: "rain showers", 82: "heavy rain showers",
-    85: "snow showers", 86: "heavy snow showers",
-    95: "thunderstorms", 96: "thunderstorms with hail", 99: "thunderstorms with hail",
-}
-
-
 # ---------------------------------------------------------------- config
 
 def config_path() -> Path:
@@ -166,9 +152,10 @@ def geocode_zip(zip_code: str, country: str = "us") -> dict:
     if not places:
         die(f"no such postal code: {zip_code} ({country.upper()})")
     place = places[0]
+    # City only. The postal code was how you told it where you are, not something
+    # you need read back to you every morning, and the last line has to fit.
     city = place.get("place name", "").strip()
-    code = str(data.get("post code", zip_code)).strip()
-    label = f"{city} {code}".strip() if city else code
+    label = city or str(data.get("post code", zip_code)).strip()
     return {"lat": float(place["latitude"]), "lon": float(place["longitude"]), "label": label}
 
 
@@ -184,7 +171,7 @@ def get_forecast(lat: float, lon: float) -> dict:
         "wind_speed_unit": "kmh",
         "precipitation_unit": "mm",
         "daily": ",".join([
-            "weather_code", "temperature_2m_max", "temperature_2m_min",
+            "temperature_2m_max", "temperature_2m_min",
             "apparent_temperature_max", "apparent_temperature_min",
             "precipitation_sum", "snowfall_sum", "precipitation_probability_max",
             "wind_speed_10m_max", "uv_index_max",
@@ -396,7 +383,6 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     snow = d("snowfall_sum")
     wind = d("wind_speed_10m_max")
     uv = d("uv_index_max")
-    code = int(d("weather_code"))
 
     # A phone notification gives you one big line and cuts it off around twenty
     # characters, so the title is numbers only: the range you dress for and the
@@ -431,11 +417,12 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     if warm:
         lines.append(f"Warmest {warm}")
 
-    # Last line is the stuff you read only when something looks off, so it sits
-    # below everything and is the line that can safely be cut off.
-    sky = WMO.get(code, "mixed")
+    # Where and when, last and alone. A phone wraps the body around twenty-four
+    # characters, and this line has to survive the wrap in one piece: splitting
+    # a place from its date is worse than not showing the sky at all, which is
+    # what the wardrobe and the rain cell already tell you.
     when_dt = datetime.strptime(today, "%Y-%m-%d")
-    lines.append(f"{sky[:1].upper()}{sky[1:]} · {label} · {when_dt.strftime('%a %-d %b')}")
+    lines.append(f"{label} · {when_dt.strftime('%a %-d %b')}")
 
     return {
         "title": title,

@@ -7,7 +7,7 @@ and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 12-17° · AQI 34
 👕🧥 · ☂️ 8-10am, 5-7pm, 8mm · 💨 38km/h
 Warmest 1-4pm
-Overcast · Portland 97205 · Mon 27 Jul
+Portland · Mon 27 Jul
 ```
 
 Four lines, always, in the same order. Most days the second one is nearly
@@ -17,7 +17,7 @@ empty, because most days there is nothing to warn you about:
 16-21° · AQI 41
 👕 · no rain
 Warmest 2-6pm
-Overcast · Portland 97205 · Sun 26 Jul
+Portland · Sun 26 Jul
 ```
 
 The shape is fixed on purpose. A phone truncates a notification title at
@@ -26,8 +26,11 @@ is numbers only: the temperature range you dress for and the air you breathe,
 left to right, nothing in front of them. No emoji tag, no adjective, no unit
 that a number does not need. Line two is every other figure worth having, and
 only when it crosses a threshold. Line three says when the heat lands. Line
-four is where and when, put last because it is the line you can afford to lose
-to the fold.
+four is where and when, short enough to survive the wrap in one piece.
+
+There is no line for the sky. "Overcast" is the one thing here you can settle
+by looking out of the window, and at the width of a phone it cost more than it
+told you.
 
 ## Setup
 
@@ -59,7 +62,7 @@ is open. Push this repo to GitHub, then add four repository secrets under
 | `NTFY_TOPIC` | the topic from `set-topic` |
 | `WEATHER_LAT` | latitude from `weather.py where` |
 | `WEATHER_LON` | longitude from `weather.py where` |
-| `WEATHER_LABEL` | display name, e.g. `Portland 97205` |
+| `WEATHER_LABEL` | display name, e.g. `Portland` |
 
 Environment variables override the config file, so the workflow needs nothing
 checked in. Trigger it by hand once from the Actions tab to confirm it works.
