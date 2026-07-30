@@ -293,6 +293,22 @@ def fmt_run(run: list[dict]) -> str:
     return fmt_span(run[0]["hour"], run[-1]["hour"] + 1)
 
 
+def warm_window(daytime: list[dict]) -> str | None:
+    """When the day is at its warmest, as a span rather than an instant.
+
+    A high of 23.5° at 5pm is within a degree of itself from 3pm to 8pm, and
+    naming the peak hour alone would claim a sharpness the day does not have.
+    The band scales with the swing, so a flat day names a narrow window instead
+    of the whole afternoon, and a big swing does not get split hairs.
+    """
+    if not daytime:
+        return None
+    temps = [h["temp"] for h in daytime]
+    band = min(1.5, max(0.5, (max(temps) - min(temps)) * 0.12))
+    near = [h["hour"] for h in daytime if h["temp"] >= max(temps) - band]
+    return fmt_span(near[0], near[-1] + 1)
+
+
 def rain_report(hours: list[dict], from_hour: int, threshold_mm: float,
                 peak_mm: float = DEFAULT_UMBRELLA_PEAK_MM) -> str | None:
     """The umbrella cell, or None when there is not enough rain to mention.
@@ -408,14 +424,22 @@ def build_brief(forecast: dict, label: str, from_hour: int = 0,
     if wind >= 35:
         stats.append(f"💨 {wind:.0f}km/h")
 
-    # Last line is the stuff you read only when something looks off.
+    # A range says how hot, not when. On a day that swings twelve degrees, that
+    # leaves you guessing at the hour, which is the thing you plan around.
+    lines = [" · ".join(stats)]
+    warm = warm_window(daytime)
+    if warm:
+        lines.append(f"Warmest {warm}")
+
+    # Last line is the stuff you read only when something looks off, so it sits
+    # below everything and is the line that can safely be cut off.
     sky = WMO.get(code, "mixed")
     when_dt = datetime.strptime(today, "%Y-%m-%d")
-    footer = f"{sky[:1].upper()}{sky[1:]} · {label} · {when_dt.strftime('%a %-d %b')}"
+    lines.append(f"{sky[:1].upper()}{sky[1:]} · {label} · {when_dt.strftime('%a %-d %b')}")
 
     return {
         "title": title,
-        "body": " · ".join(stats) + "\n" + footer,
+        "body": "\n".join(lines),
         "hours": hours,
     }
 

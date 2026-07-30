@@ -6,25 +6,28 @@ and do I need an umbrella. Celsius. No API key, no dependencies, one file.
 ```
 12-17° · AQI 34
 👕🧥 · ☂️ 8-10am, 5-7pm, 8mm · 💨 38km/h
+Warmest 1-4pm
 Overcast · Portland 97205 · Mon 27 Jul
 ```
 
-Three lines, always, in the same order. Most days the middle one is nearly
+Four lines, always, in the same order. Most days the second one is nearly
 empty, because most days there is nothing to warn you about:
 
 ```
 16-21° · AQI 41
 👕 · no rain
+Warmest 2-6pm
 Overcast · Portland 97205 · Sun 26 Jul
 ```
 
 The shape is fixed on purpose. A phone truncates a notification title at
-roughly twenty characters and shows about four lines of body, so the title is
-numbers only: the temperature range you dress for and the air you breathe, left
-to right, nothing in front of them. No emoji tag, no adjective, no unit that a
-number does not need. Line two is every other figure worth having, and only
-when it crosses a threshold. Line three is what you read when something looks
-wrong.
+roughly twenty characters and wraps the body around twenty-four, so the title
+is numbers only: the temperature range you dress for and the air you breathe,
+left to right, nothing in front of them. No emoji tag, no adjective, no unit
+that a number does not need. Line two is every other figure worth having, and
+only when it crosses a threshold. Line three says when the heat lands. Line
+four is where and when, put last because it is the line you can afford to lose
+to the fold.
 
 ## Setup
 
@@ -139,6 +142,14 @@ Both numbers are config, not code. Raise them in
 ```json
 { "umbrella_mm": 8, "umbrella_peak_mm": 2.5 }
 ```
+
+**Warmest.** A range tells you how hot, not when, and on a day that swings
+twelve degrees the hour is the thing you are actually planning around. The line
+names a span rather than a peak, because a high of 23.5° at 5pm is usually
+within a degree of itself from 3pm to 8pm and calling it "5pm" would claim a
+sharpness the day does not have. The band that counts as near the high scales
+with the swing, so a flat day names a narrow window instead of the whole
+afternoon.
 
 Everything else only appears when it crosses a line: wind over 35 km/h, and UV
 index 6 or higher on a day that is not already wet.
